@@ -1,7 +1,6 @@
-/**
+/*
  * ==========================================================================
- * Zenime - APP.JS
- * Core Controller for simulated auth, API cache, catalog, hover, and lists.
+   Zenime - APP.JS
  * ==========================================================================
  */
 
