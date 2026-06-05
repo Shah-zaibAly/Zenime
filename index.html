@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zenime - Discover & Track Your Anime Flow</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Browse, search, filter, and track your favorite anime with AniFlow. Replicate your Anime-Planet experience with responsive layouts, personalized lists, and real-time Jikan API data.">
+  <meta name="keywords" content="anime, tracking, watchlist, jikan api, anime-planet, aniflow, anime catalog">
+  <meta name="author" content="AniFlow Developer">
+  <!-- Fonts: Inter and Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Link -->
+  <link rel="stylesheet" href="styles.css">
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- App Header — IMDb-style bar (dark theme preserved) -->
+  <header class="app-header imdb-header" id="app-header">
+    <div class="header-container">
+      <div class="header-left">
+        <div class="logo-group" id="btn-logo" title="AniFlow Home">
+          <span class="logo-imdb-badge">Zenime<span></span></span>
+        </div>
+        <button type="button" class="header-menu-btn" id="btn-header-menu" aria-expanded="false" aria-controls="header-menu-panel">
+          <i data-lucide="menu"></i>
+          <span>Menu</span>
+        </button>
+      </div>
+
+      <div class="header-search-block">
+        <div class="imdb-search-bar">
+          <div class="search-scope-wrap">
+            <select id="search-scope" class="search-scope-select" aria-label="Search category">
+              <option value="all">All</option>
+              <option value="airing">Airing</option>
+              <option value="upcoming">Upcoming</option>
+            </select>
+            <i data-lucide="chevron-down" class="scope-chevron"></i>
+          </div>
+          <div class="search-scope-divider" aria-hidden="true"></div>
+          <input type="text" id="search-input" class="imdb-search-input" placeholder="Search anime, studios, characters..." autocomplete="off">
+          <button type="button" id="search-clear-btn" class="imdb-search-clear hide" aria-label="Clear search">
+            <i data-lucide="x"></i>
+          </button>
+          <button type="button" id="btn-search-submit" class="imdb-search-submit" aria-label="Search">
+            <i data-lucide="search"></i>
+          </button>
+        </div>
+        <div id="search-suggestions" class="suggestions-dropdown hide"></div>
+      </div>
+
+      <div class="header-right">
+        <button type="button" class="header-link-btn header-discover" id="btn-random" title="Random anime">
+          <span class="link-brand">Zen</span><span class="link-accent">Discover</span>
+        </button>
+        <span class="header-vdivider" aria-hidden="true"></span>
+        <button type="button" class="header-link-btn header-watchlist" id="nav-btn-watchlist">
+          <i data-lucide="bookmark-plus"></i>
+          <span>Watchlist</span>
+        </button>
+        <div class="auth-wrapper" id="auth-header-section">
+          <button type="button" class="header-link-btn header-sign-in" id="btn-show-login">Sign in</button>
+        </div>
+        <div class="header-lang" id="header-lang">
+          <button type="button" class="header-lang-btn" id="btn-lang" aria-expanded="false" aria-haspopup="listbox">
+            <span id="lang-label">English</span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+          <div class="header-lang-dropdown hide" id="lang-dropdown" role="listbox">
+            <button type="button" class="lang-option active" data-lang="en">English</button>
+            <button type="button" class="lang-option" data-lang="ja">日本語</button>
+          </div>
+        </div>
+        <button type="button" class="header-icon-btn theme-toggle-btn" id="theme-toggle" title="Toggle theme" aria-label="Toggle theme">
+          <i data-lucide="sun" class="sun-icon"></i>
+          <i data-lucide="moon" class="moon-icon"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Menu panel (Browse, filters toggle, etc.) -->
+    <div class="header-menu-panel hide" id="header-menu-panel">
+      <button type="button" class="menu-panel-item active" id="nav-btn-browse">
+        <i data-lucide="compass"></i> Browse Anime
+      </button>
+      <button type="button" class="menu-panel-item" id="nav-btn-mylist">
+        <i data-lucide="list"></i> My Watchlist
+      </button>
+      <button type="button" class="menu-panel-item" id="btn-menu-filters">
+        <i data-lucide="sliders-horizontal"></i> Show Filters
+      </button>
+      <button type="button" class="menu-panel-item" id="btn-random-menu">
+        <i data-lucide="shuffle"></i> Surprise Me
+      </button>
+      <button type="button" class="menu-panel-item menu-panel-theme" id="btn-theme-menu">
+        <i data-lucide="palette"></i> Toggle Theme
+      </button>
+    </div>
+    <div class="header-menu-backdrop hide" id="header-menu-backdrop"></div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="main-content" id="main-content">
+    
+    <!-- Browse / Explore Section -->
+    <section id="view-browse" class="view-section active">
+      
+      <!-- Hero carousel: airing & upcoming anime -->
+      <div class="hero-slider" id="featured-hero">
+        <div class="hero-carousel-viewport">
+          <div class="hero-slide-backdrop hero-backdrop-layer is-active" id="hero-backdrop-a"></div>
+          <div class="hero-slide-backdrop hero-backdrop-layer" id="hero-backdrop-b"></div>
+          <img class="hero-poster-accent hide" id="hero-poster-accent" alt="" loading="lazy">
+          <div class="hero-slide-content" id="hero-slide-content">
+            <span class="badge badge-accent" id="hero-badge">Airing Now</span>
+            <h1 class="hero-title" id="hero-title">Loading...</h1>
+            <div class="hero-metadata">
+              <span id="hero-meta-type">TV</span> • 
+              <span id="hero-meta-episodes">N/A Ep</span> • 
+              <span id="hero-meta-status">Airing</span> • 
+              <span id="hero-meta-score">★ 8.5</span>
+            </div>
+            <p class="hero-synopsis" id="hero-synopsis">Fetching the latest airing and upcoming anime...</p>
+            <div class="hero-genres" id="hero-genres"></div>
+            <div class="hero-actions">
+              <button class="btn btn-primary btn-lg" id="hero-btn-details">
+                <i data-lucide="info"></i> View Details
+              </button>
+              <button class="btn btn-secondary btn-lg" id="hero-btn-add">
+                <i data-lucide="plus"></i> Add to Watchlist
+              </button>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="hero-nav-btn hero-nav-prev" id="hero-prev" aria-label="Previous slide">
+          <i data-lucide="chevron-left"></i>
+        </button>
+        <button type="button" class="hero-nav-btn hero-nav-next" id="hero-next" aria-label="Next slide">
+          <i data-lucide="chevron-right"></i>
+        </button>
+        <div class="hero-dots" id="hero-dots" role="tablist" aria-label="Featured anime slides"></div>
+        <div class="hero-progress-bar" id="hero-progress-bar"></div>
+      </div>
+
+      <!-- IMDb-style landing categories (visible when not searching/filtering) -->
+      <div id="browse-landing-sections">
+        
+        <!-- Top Picks Section -->
+        <section class="top-picks-section">
+          <div class="top-picks-header">
+            <div>
+              <h2 class="top-picks-title">What to watch</h2>
+              <p class="top-picks-sub">
+                <a href="#" class="top-picks-link" id="top-picks-link">Top picks</a>
+                <span class="top-picks-desc">Anime airing and trending now</span>
+              </p>
+            </div>
+            <a href="#" class="top-picks-more" id="top-picks-more">Explore catalog →</a>
+          </div>
+          <div class="imdb-picks-scroller">
+            <div class="imdb-picks-track" id="top-picks-track">
+              <div class="genre-loading">Loading top picks...</div>
+            </div>
+            <button type="button" class="picks-scroll-btn picks-scroll-next" id="picks-scroll-next" aria-label="Scroll picks">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+        </section>
+
+        <!-- Popular Anime Section -->
+        <section class="top-picks-section popular-anime-section">
+          <div class="top-picks-header">
+            <div>
+              <h2 class="top-picks-title" style="color: var(--accent);">Popular Anime</h2>
+              <p class="top-picks-sub">
+                <span class="top-picks-desc" style="margin-left: 0;">Most popular titles on AniFlow</span>
+              </p>
+            </div>
+          </div>
+          <div class="imdb-picks-scroller">
+            <div class="imdb-picks-track" id="popular-anime-track">
+              <div class="genre-loading">Loading popular anime...</div>
+            </div>
+            <button type="button" class="picks-scroll-btn picks-scroll-next" id="popular-scroll-next" aria-label="Scroll popular">
+              <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+        </section>
+
+        <!-- Top 10 on AniFlow this week Section -->
+        <section class="top-picks-section top-10-section">
+          <div class="top-picks-header">
+            <div>
+              <h2 class="top-picks-title" style="color: var(--warning); display: flex; align-items: center; gap: 0.25rem;">
+                Top 10 on AniFlow this week <i data-lucide="chevron-right" style="width: 24px; height: 24px;"></i>
+              </h2>
+            </div>
+          </div>
+          <div class="top-10-container" id="top-10-container">
+            <div class="genre-loading">Loading Top 10...</div>
+          </div>
+        </section>
+
+      </div>
+
+      <div class="catalog-layout">
+        <!-- Sidebar Filters -->
+        <aside class="sidebar-filters" id="sidebar-filters">
+          <div class="sidebar-header">
+            <h3><i data-lucide="sliders-horizontal"></i> Filters</h3>
+            <button class="btn-reset" id="btn-clear-filters">Reset All</button>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-type">Format</label>
+            <select id="filter-type" class="filter-select">
+              <option value="">All Formats</option>
+              <option value="tv">TV Series</option>
+              <option value="movie">Movie</option>
+              <option value="ova">OVA</option>
+              <option value="ona">ONA</option>
+              <option value="special">Special</option>
+              <option value="music">Music</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-status">Airing Status</label>
+            <select id="filter-status" class="filter-select">
+              <option value="">All Statuses</option>
+              <option value="airing">Currently Airing</option>
+              <option value="complete">Finished Airing</option>
+              <option value="upcoming">Upcoming</option>
+            </select>
+          </div>
+
+          <div class="filter-group">
+            <label for="filter-sort">Sort By</label>
+            <select id="filter-sort" class="filter-select">
+              <option value="popularity">Popularity</option>
+              <option value="score">Top Score</option>
+              <option value="title">Alphabetical</option>
+              <option value="start_date">Newest Release</option>
+              <option value="episodes">Episode Count</option>
+            </select>
+          </div>
+
+          <!-- Collapsible Genre Filter Panel -->
+          <div class="filter-group">
+            <div class="filter-subtitle-row" id="toggle-genres-btn">
+              <label>Filter by Genres</label>
+              <i data-lucide="chevron-down" class="chevron-icon"></i>
+            </div>
+            <div class="genre-pills-container active" id="genre-pills-list">
+              <!-- Dynamically populated genre pills -->
+              <span class="genre-loading">Loading genres...</span>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Catalog Container -->
+        <div class="catalog-content">
+          <div class="catalog-header">
+            <h2 id="catalog-title">Most Popular Anime</h2>
+            <div class="results-count" id="results-count">Showing 0 results</div>
+          </div>
+
+          <div class="anime-grid" id="anime-grid">
+            <!-- Cards or Skeleton Loaders loaded here -->
+          </div>
+
+          <!-- Pagination -->
+          <div class="pagination-container" id="pagination">
+            <button class="btn btn-outline btn-pagination" id="btn-prev" disabled>
+              <i data-lucide="chevron-left"></i> Previous
+            </button>
+            <span class="page-indicator" id="page-num">Page 1 of 1</span>
+            <button class="btn btn-outline btn-pagination" id="btn-next">
+              Next <i data-lucide="chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- My List (Watchlist Profile Dashboard) Section -->
+    <section id="view-mylist" class="view-section">
+      <div class="mylist-header">
+        <div class="mylist-profile">
+          <div class="avatar" id="mylist-avatar">U</div>
+          <div class="profile-info">
+            <h2 id="mylist-username">Guest User</h2>
+            <p class="profile-meta">Keep track of your watching progress</p>
+          </div>
+        </div>
+
+        <div class="mylist-stats">
+          <div class="stat-card">
+            <span class="stat-value" id="stat-total-count">0</span>
+            <span class="stat-label">Total Anime</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-episodes-count">0</span>
+            <span class="stat-label">Episodes Watched</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value" id="stat-avg-score">0.0</span>
+            <span class="stat-label">Average Score</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Watchlist Category Tabs -->
+      <div class="mylist-tabs">
+        <button class="tab-btn active" data-list-tab="all">All Anime</button>
+        <button class="tab-btn" data-list-tab="watching"><span class="tab-dot dot-watching"></span> Watching</button>
+        <button class="tab-btn" data-list-tab="completed"><span class="tab-dot dot-completed"></span> Completed</button>
+        <button class="tab-btn" data-list-tab="onhold"><span class="tab-dot dot-onhold"></span> On Hold</button>
+        <button class="tab-btn" data-list-tab="dropped"><span class="tab-dot dot-dropped"></span> Dropped</button>
+      </div>
+
+      <!-- Saved Anime Grid -->
+      <div class="mylist-content">
+        <div class="mylist-grid-header">
+          <span>Cover & Title</span>
+          <span class="grid-center">My Progress</span>
+          <span class="grid-center">My Rating</span>
+          <span class="grid-center">Status</span>
+          <span class="grid-center">Actions</span>
+        </div>
+        <div class="mylist-items-list" id="mylist-items-container">
+          <!-- Dynamically populated rows -->
+          <div class="no-items-message">
+            <i data-lucide="inbox"></i>
+            <p>Your watchlist is empty. Search for anime to add them here!</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Anime detail page (IMDb-style, same window) -->
+    <section id="view-detail" class="view-section view-detail-page">
+      <div class="detail-page-inner">
+        <nav class="detail-breadcrumb">
+          <button type="button" class="detail-back-btn" id="btn-detail-back">
+            <i data-lucide="arrow-left"></i> Back to browse
+          </button>
+        </nav>
+
+        <header class="title-page-header">
+          <div class="title-page-heading">
+            <h1 id="page-title-main">Anime Title</h1>
+            <p class="title-page-meta" id="page-title-meta">2026 · TV · 24 eps</p>
+          </div>
+          <div class="title-page-scores">
+            <div class="score-block score-mal">
+              <span class="score-label">MAL SCORE</span>
+              <div class="score-value-row">
+                <i data-lucide="star" class="score-star-filled"></i>
+                <span id="page-score-val">8.5</span><span class="score-max">/10</span>
+              </div>
+              <span class="score-votes" id="page-score-votes">—</span>
+            </div>
+            <div class="score-block score-rank">
+              <span class="score-label">POPULARITY</span>
+              <span class="score-rank-val" id="page-rank-val">#—</span>
+            </div>
+          </div>
+        </header>
+
+        <div class="title-media-row">
+          <div class="title-poster-col">
+            <div class="title-poster-wrap">
+              <img src="" alt="" id="page-poster" class="title-poster-img">
+              <button type="button" class="poster-bookmark-btn" id="page-poster-bookmark" title="Add to watchlist">
+                <i data-lucide="plus"></i>
+              </button>
+            </div>
+          </div>
+          <div class="title-trailer-col">
+            <div class="title-trailer-wrap" id="page-trailer-wrap">
+              <iframe id="page-trailer-iframe" src="" allowfullscreen title="Trailer"></iframe>
+              <div class="trailer-placeholder hide" id="page-trailer-placeholder">
+                <i data-lucide="play-circle"></i>
+                <span>No trailer available</span>
+              </div>
+            </div>
+          </div>
+          <div class="title-media-aside">
+            <button type="button" class="media-aside-box" id="page-jump-cast">
+              <i data-lucide="users"></i>
+              <span id="page-char-count">—</span>
+              <small>Characters</small>
+            </button>
+            <button type="button" class="media-aside-box" id="page-jump-recs">
+              <i data-lucide="sparkles"></i>
+              <span>More</span>
+              <small>Like this</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="title-genres-scroll" id="page-genres"></div>
+
+        <div class="title-synopsis-row">
+          <div class="title-synopsis-col">
+            <p id="page-synopsis">Loading synopsis...</p>
+            <div class="title-facts">
+              <span><strong>Studio:</strong> <span id="page-studio">—</span></span>
+              <span><strong>Aired:</strong> <span id="page-aired">—</span></span>
+              <span><strong>Status:</strong> <span id="page-status">—</span></span>
+              <span id="page-trailer-link-container" class="hide"><strong>Trailer:</strong> <a id="page-trailer-link" href="#" target="_blank" style="color: var(--imdb-link); font-weight: 600; text-decoration: underline; display: inline-flex; align-items: center; gap: 0.25rem;">Watch on YouTube <i data-lucide="external-link" style="width: 14px; height: 14px;"></i></a></span>
+            </div>
+          </div>
+          <div class="title-watchlist-col" id="page-watchlist-panel">
+            <div class="watchlist-editor imdb-watchlist-cta">
+              <button type="button" class="btn-imdb-watchlist" id="page-watchlist-toggle">
+                <i data-lucide="plus"></i>
+                <span>Add to Watchlist</span>
+              </button>
+              <div class="watchlist-editor-form hide" id="page-watchlist-form">
+                <label for="page-list-status">Status</label>
+                <select id="page-list-status" class="filter-select">
+                  <option value="">— Select —</option>
+                  <option value="watching">Watching</option>
+                  <option value="completed">Completed</option>
+                  <option value="onhold">On Hold</option>
+                  <option value="dropped">Dropped</option>
+                </select>
+                <div class="watchlist-progress-row hide" id="page-watchlist-progress-row">
+                  <div class="progress-input-group">
+                    <label>Episodes</label>
+                    <div class="progress-spinner">
+                      <input type="number" id="page-progress-episodes" min="0" value="0">
+                      <span>/ <span id="page-progress-total">?</span></span>
+                    </div>
+                  </div>
+                  <div class="progress-input-group">
+                    <label>My Rating</label>
+                    <select id="page-progress-rating" class="filter-select">
+                      <option value="0">No score</option>
+                      <option value="10">(10) Masterpiece</option>
+                      <option value="9">(9) Great</option>
+                      <option value="8">(8) Very Good</option>
+                      <option value="7">(7) Good</option>
+                      <option value="6">(6) Fine</option>
+                      <option value="5">(5) Average</option>
+                      <option value="4">(4) Bad</option>
+                      <option value="3">(3) Very Bad</option>
+                      <option value="2">(2) Horrible</option>
+                      <option value="1">(1) Appalling</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-primary w-full" id="page-save-watchlist">Save</button>
+                <button type="button" class="btn btn-link w-full text-danger hide" id="page-delete-watchlist">Remove from list</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="cast-section" id="cast-section">
+          <div class="section-heading imdb-section-heading">
+            <span class="heading-accent"></span>
+            <h2>Top Cast</h2>
+            <span class="heading-count" id="page-cast-count">0</span>
+            <i data-lucide="chevron-right" class="heading-chevron"></i>
+          </div>
+          <div class="cast-grid" id="page-cast-grid">
+            <div class="genre-loading">Loading cast...</div>
+          </div>
+        </section>
+
+        <section class="detail-recs-section" id="detail-recs-section">
+          <div class="section-heading imdb-section-heading">
+            <span class="heading-accent"></span>
+            <h2>More like this</h2>
+          </div>
+          <div class="imdb-picks-track detail-recs-track" id="page-recs-track"></div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <!-- Interactive Floating Hover Tooltip (Hover Box) -->
+  <div class="hover-tooltip hide" id="hover-tooltip">
+    <div class="tooltip-header">
+      <h4 class="tooltip-title" id="tooltip-title">Anime Title</h4>
+      <div class="tooltip-score"><i data-lucide="star"></i> <span id="tooltip-score-val">8.5</span></div>
+    </div>
+    <div class="tooltip-meta">
+      <span id="tooltip-studio">Madhouse</span> • 
+      <span id="tooltip-type">TV</span> • 
+      <span id="tooltip-year">2026</span>
+    </div>
+    <div class="tooltip-synopsis-wrapper">
+      <p class="tooltip-synopsis" id="tooltip-synopsis">This is the synopsis description of the hovered anime details. It will truncate properly after a few lines of text...</p>
+    </div>
+    <div class="tooltip-genres" id="tooltip-genres">
+      <!-- Genres loaded dynamically -->
+    </div>
+    <div class="tooltip-footer">
+      <span class="tooltip-status-text" id="tooltip-status">Airing</span>
+      <span class="tooltip-episodes-text" id="tooltip-episodes">12 Episodes</span>
+    </div>
+  </div>
+
+  <!-- Anime Full Details Modal -->
+  <div class="modal-overlay hide" id="details-modal">
+    <div class="modal-card detail-modal-card">
+      <button class="modal-close" id="details-modal-close"><i data-lucide="x"></i></button>
+      
+      <div class="modal-detail-layout">
+        <!-- Left Side: Poster, Watchlist Editor, Score -->
+        <div class="modal-detail-sidebar">
+          <div class="modal-poster-wrapper">
+            <img src="" alt="Poster" id="modal-poster">
+          </div>
+          
+          <div class="modal-user-actions" id="modal-user-list-actions">
+            <!-- Populated via Javascript depending on auth status -->
+            <div class="watchlist-editor">
+              <label for="modal-list-status">Add to Watchlist</label>
+              <select id="modal-list-status" class="filter-select">
+                <option value="">-- Select Status --</option>
+                <option value="watching">Watching</option>
+                <option value="completed">Completed</option>
+                <option value="onhold">On Hold</option>
+                <option value="dropped">Dropped</option>
+              </select>
+              
+              <div class="watchlist-progress-row hide" id="watchlist-progress-row">
+                <div class="progress-input-group">
+                  <label>Episodes</label>
+                  <div class="progress-spinner">
+                    <input type="number" id="modal-progress-episodes" min="0" value="0">
+                    <span>/ <span id="modal-progress-total">12</span></span>
+                  </div>
+                </div>
+                
+                <div class="progress-input-group">
+                  <label>My Rating</label>
+                  <select id="modal-progress-rating" class="filter-select">
+                    <option value="0">No score</option>
+                    <option value="10">(10) Masterpiece</option>
+                    <option value="9">(9) Great</option>
+                    <option value="8">(8) Very Good</option>
+                    <option value="7">(7) Good</option>
+                    <option value="6">(6) Fine</option>
+                    <option value="5">(5) Average</option>
+                    <option value="4">(4) Bad</option>
+                    <option value="3">(3) Very Bad</option>
+                    <option value="2">(2) Horrible</option>
+                    <option value="1">(1) Appalling</option>
+                  </select>
+                </div>
+              </div>
+              <button class="btn btn-primary w-full" id="btn-save-watchlist-item">Save Watchlist State</button>
+              <button class="btn btn-link w-full text-danger hide" id="btn-delete-watchlist-item">Remove from list</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Side: Details, Trailer, Characters, Recommendations -->
+        <div class="modal-detail-main">
+          <div class="detail-main-header">
+            <h2 id="modal-title-main">Anime Title</h2>
+            <h5 id="modal-title-alt" class="alt-title">Alternative Title</h5>
+            <div class="modal-tags" id="modal-genres"></div>
+          </div>
+
+          <!-- Tab Bar -->
+          <div class="detail-tabs">
+            <button class="detail-tab-btn active" data-tab="info">Overview</button>
+            <button class="detail-tab-btn" data-tab="characters">Characters</button>
+            <button class="detail-tab-btn" data-tab="relations">Recommendations</button>
+          </div>
+
+          <!-- Tab Content: Overview -->
+          <div class="detail-tab-panel active" id="panel-info">
+            <div class="overview-stats-grid">
+              <div class="info-stat">
+                <span class="info-label">Score</span>
+                <span class="info-value text-accent" id="modal-val-score">★ 8.9</span>
+              </div>
+              <div class="info-stat">
+                <span class="info-label">Rank</span>
+                <span class="info-value" id="modal-val-rank">#42</span>
+              </div>
+              <div class="info-stat">
+                <span class="info-label">Type</span>
+                <span class="info-value" id="modal-val-type">TV</span>
+              </div>
+              <div class="info-stat">
+                <span class="info-label">Status</span>
+                <span class="info-value" id="modal-val-status">Airing</span>
+              </div>
+              <div class="info-stat">
+                <span class="info-label">Studio</span>
+                <span class="info-value" id="modal-val-studio">Kyoto Animation</span>
+              </div>
+              <div class="info-stat">
+                <span class="info-label">Aired</span>
+                <span class="info-value" id="modal-val-aired">Oct 2015 to Dec 2015</span>
+              </div>
+            </div>
+
+            <div class="overview-synopsis">
+              <h3>Synopsis</h3>
+              <p id="modal-val-synopsis">Anime synopsis placeholder...</p>
+            </div>
+
+            <!-- YouTube Trailer Section -->
+            <div class="overview-trailer" id="modal-trailer-section">
+              <h3>Official Trailer</h3>
+              <div class="trailer-iframe-wrapper">
+                <iframe id="modal-trailer-iframe" src="" allowfullscreen></iframe>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab Content: Characters -->
+          <div class="detail-tab-panel" id="panel-characters">
+            <div class="characters-grid" id="modal-characters-grid">
+              <!-- Dynamically populated character cards -->
+            </div>
+          </div>
+
+          <!-- Tab Content: Recommendations -->
+          <div class="detail-tab-panel" id="panel-relations">
+            <div class="recs-grid" id="modal-recs-grid">
+              <!-- Dynamically populated recommendations -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authentication Modal (Login / Sign Up) -->
+  <div class="modal-overlay hide" id="auth-modal">
+    <div class="modal-card auth-modal-card">
+      <button class="modal-close" id="auth-modal-close"><i data-lucide="x"></i></button>
+      
+      <div class="auth-header">
+        <h2 id="auth-modal-title">Sign In</h2>
+        <p id="auth-modal-subtitle">Welcome back to AniFlow</p>
+      </div>
+
+      <form id="auth-form" class="auth-form">
+        <div class="form-group">
+          <label for="auth-username">Username</label>
+          <input type="text" id="auth-username" required placeholder="Enter username (3+ chars)">
+        </div>
+
+        <div class="form-group">
+          <label for="auth-password">Password</label>
+          <input type="password" id="auth-password" required placeholder="Enter password (6+ chars)">
+        </div>
+
+        <div class="auth-error-msg hide" id="auth-error-msg">Incorrect username or password.</div>
+
+        <button type="submit" class="btn btn-primary w-full btn-lg" id="auth-submit-btn">Login</button>
+      </form>
+
+      <div class="auth-footer">
+        <span id="auth-switch-text">Don't have an account?</span>
+        <button class="btn-link" id="btn-auth-switch">Create Account</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification System -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Main JavaScript File -->
+  <script src="app.js"></script>
+</body>
+</html>
