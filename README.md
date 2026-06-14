@@ -87,5 +87,5 @@ This project uses the [Jikan API](https://jikan.moe/) — a free, open source My
 
 **Shahzaib Ali**
 - GitHub: [Shah-zaibAly](https://github.com/Shah-zaibAly)
-- LinkedIn: [linkedin.com/in/yourprofile]([https://linkedin.com/in/yourprofile](https://www.linkedin.com/in/shahzaib-ali-659002374/))
+- LinkedIn: [linkedin.com/in/yourprofile]([https://linkedin.com/in/yourprofile](https://www.linkedin.com/in/shahzaib-ali-659002374/)
 
